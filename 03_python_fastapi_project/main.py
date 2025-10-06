@@ -5,9 +5,10 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from schemas import ProductDTO, ProductCreate, ProductUpdate
+from sqlalchemy.orm import selectinload
+from schemas import ProductDTO, ProductCreate, ProductUpdate, BasketItemDTO, BasketItemCreate, BasketItemUpdate
 from config import settings
-from database import Product, create_tables, get_db
+from database import Product, BasketItem, create_tables, get_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -109,6 +110,126 @@ async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(product)
     await db.commit()
     return {"message": "Product deleted successfully"}
+
+
+@app.get("/basket/", response_model=List[BasketItemDTO])
+async def get_basket(db: AsyncSession = Depends(get_db)):
+    """
+    Get all items in the basket.
+    """
+    result = await db.execute(
+        select(BasketItem).options(selectinload(BasketItem.product))
+    )
+    basket_items = result.scalars().all()
+    return basket_items
+
+
+@app.post("/basket/", response_model=BasketItemDTO, status_code=status.HTTP_201_CREATED)
+async def add_to_basket(item: BasketItemCreate, db: AsyncSession = Depends(get_db)):
+    """
+    Add a product to the basket or increase quantity if already exists.
+    """
+    # Check if product exists
+    product_result = await db.execute(select(Product).filter(Product.id == item.product_id))
+    product = product_result.scalar_one_or_none()
+    
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found.")
+    
+    # Check if item already exists in basket
+    existing_item_result = await db.execute(
+        select(BasketItem).filter(BasketItem.product_id == item.product_id)
+    )
+    existing_item = existing_item_result.scalar_one_or_none()
+    
+    if existing_item:
+        # Update quantity
+        existing_item.quantity += item.quantity
+        await db.commit()
+        await db.refresh(existing_item)
+        
+        # Load the product relationship
+        result = await db.execute(
+            select(BasketItem).options(selectinload(BasketItem.product))
+            .filter(BasketItem.id == existing_item.id)
+        )
+        return result.scalar_one()
+    else:
+        # Create new basket item
+        db_item = BasketItem(
+            product_id=item.product_id,
+            quantity=item.quantity
+        )
+        db.add(db_item)
+        await db.commit()
+        await db.refresh(db_item)
+        
+        # Load the product relationship
+        result = await db.execute(
+            select(BasketItem).options(selectinload(BasketItem.product))
+            .filter(BasketItem.id == db_item.id)
+        )
+        return result.scalar_one()
+
+
+@app.put("/basket/{item_id}", response_model=BasketItemDTO)
+async def update_basket_item(
+    item_id: int,
+    item_update: BasketItemUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update the quantity of a basket item.
+    """
+    result = await db.execute(select(BasketItem).filter(BasketItem.id == item_id))
+    basket_item = result.scalar_one_or_none()
+    
+    if basket_item is None:
+        raise HTTPException(status_code=404, detail="Basket item not found.")
+    
+    if item_update.quantity <= 0:
+        # Remove item if quantity is 0 or negative
+        await db.delete(basket_item)
+        await db.commit()
+        raise HTTPException(status_code=204, detail="Item removed from basket.")
+    
+    basket_item.quantity = item_update.quantity
+    await db.commit()
+    await db.refresh(basket_item)
+    
+    # Load the product relationship
+    result = await db.execute(
+        select(BasketItem).options(selectinload(BasketItem.product))
+        .filter(BasketItem.id == basket_item.id)
+    )
+    return result.scalar_one()
+
+
+@app.delete("/basket/{item_id}")
+async def remove_from_basket(item_id: int, db: AsyncSession = Depends(get_db)):
+    """
+    Remove an item from the basket.
+    """
+    result = await db.execute(select(BasketItem).filter(BasketItem.id == item_id))
+    basket_item = result.scalar_one_or_none()
+    
+    if basket_item is None:
+        raise HTTPException(status_code=404, detail="Basket item not found.")
+    
+    await db.delete(basket_item)
+    await db.commit()
+    return {"message": "Item removed from basket successfully"}
+
+
+@app.delete("/basket/")
+async def clear_basket(db: AsyncSession = Depends(get_db)):
+    """
+    Clear all items from the basket.
+    """
+    from sqlalchemy import delete
+    await db.execute(delete(BasketItem))
+    await db.commit()
+    return {"message": "Basket cleared successfully"}
 
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Float, Integer, String
+from sqlalchemy import Column, DateTime, Float, Integer, String, ForeignKey
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 
 from config import settings
 
@@ -24,6 +24,17 @@ class Product(Base):
     description = Column(String, nullable=True)
     stock = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.now())
+
+
+class BasketItem(Base):
+    __tablename__ = "basket_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+    created_at = Column(DateTime, default=datetime.now())
+    
+    product = relationship("Product")
 
 
 async def get_db():
