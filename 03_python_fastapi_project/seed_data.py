@@ -79,10 +79,8 @@ async def seed_products():
 
         if existing_products:
             print(f"Database already has {len(existing_products)} products.")
-            user_input = input("Do you want to add more sample products anyway? (y/n): ")
-            if user_input.lower() != 'y':
-                print("Skipping seed.")
-                return
+            print("Skipping seed to avoid duplicates.")
+            return
 
         # Add sample products
         for product_data in sample_products:

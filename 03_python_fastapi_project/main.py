@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import List
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -132,22 +132,32 @@ async def add_to_basket(item: BasketItemCreate, db: AsyncSession = Depends(get_d
     # Check if product exists
     product_result = await db.execute(select(Product).filter(Product.id == item.product_id))
     product = product_result.scalar_one_or_none()
-    
+
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found.")
-    
+
     # Check if item already exists in basket
     existing_item_result = await db.execute(
         select(BasketItem).filter(BasketItem.product_id == item.product_id)
     )
     existing_item = existing_item_result.scalar_one_or_none()
-    
+
     if existing_item:
+        # Calculate new quantity
+        new_quantity = existing_item.quantity + item.quantity
+
+        # Validate stock availability
+        if new_quantity > product.stock:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient stock. Available: {product.stock}, Requested: {new_quantity}"
+            )
+
         # Update quantity
-        existing_item.quantity += item.quantity
+        existing_item.quantity = new_quantity
         await db.commit()
         await db.refresh(existing_item)
-        
+
         # Load the product relationship
         result = await db.execute(
             select(BasketItem).options(selectinload(BasketItem.product))
@@ -155,6 +165,13 @@ async def add_to_basket(item: BasketItemCreate, db: AsyncSession = Depends(get_d
         )
         return result.scalar_one()
     else:
+        # Validate stock availability for new item
+        if item.quantity > product.stock:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient stock. Available: {product.stock}, Requested: {item.quantity}"
+            )
+
         # Create new basket item
         db_item = BasketItem(
             product_id=item.product_id,
@@ -163,7 +180,7 @@ async def add_to_basket(item: BasketItemCreate, db: AsyncSession = Depends(get_d
         db.add(db_item)
         await db.commit()
         await db.refresh(db_item)
-        
+
         # Load the product relationship
         result = await db.execute(
             select(BasketItem).options(selectinload(BasketItem.product))
@@ -172,7 +189,7 @@ async def add_to_basket(item: BasketItemCreate, db: AsyncSession = Depends(get_d
         return result.scalar_one()
 
 
-@app.put("/basket/{item_id}", response_model=BasketItemDTO)
+@app.put("/basket/{item_id}")
 async def update_basket_item(
     item_id: int,
     item_update: BasketItemUpdate,
@@ -181,22 +198,32 @@ async def update_basket_item(
     """
     Update the quantity of a basket item.
     """
-    result = await db.execute(select(BasketItem).filter(BasketItem.id == item_id))
+    result = await db.execute(
+        select(BasketItem).options(selectinload(BasketItem.product))
+        .filter(BasketItem.id == item_id)
+    )
     basket_item = result.scalar_one_or_none()
-    
+
     if basket_item is None:
         raise HTTPException(status_code=404, detail="Basket item not found.")
-    
+
     if item_update.quantity <= 0:
         # Remove item if quantity is 0 or negative
         await db.delete(basket_item)
         await db.commit()
-        raise HTTPException(status_code=204, detail="Item removed from basket.")
-    
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+    # Validate stock availability
+    if item_update.quantity > basket_item.product.stock:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Insufficient stock. Available: {basket_item.product.stock}, Requested: {item_update.quantity}"
+        )
+
     basket_item.quantity = item_update.quantity
     await db.commit()
     await db.refresh(basket_item)
-    
+
     # Load the product relationship
     result = await db.execute(
         select(BasketItem).options(selectinload(BasketItem.product))
