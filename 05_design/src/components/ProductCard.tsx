@@ -7,9 +7,10 @@ interface ProductCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onView?: () => void;
+  onAddToBasket: () => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete, onView }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete, onView, onAddToBasket }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDeleteClick = () => {
@@ -47,6 +48,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete, on
             <span className="stock-label">Stock:</span>
             <span className="stock-value">{product.stock}</span>
           </div>
+          
+          <button 
+            className="btn btn-add-to-basket"
+            onClick={onAddToBasket}
+            disabled={product.stock === 0}
+            title="Add to basket"
+          >
+            ➕
+          </button>
         </div>
         
         <div className="product-actions">

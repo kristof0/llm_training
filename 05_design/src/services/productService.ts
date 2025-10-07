@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { Product, ProductFormData } from '../types/Product';
-
-const API_BASE_URL = 'http://localhost:8000';
+import { API_CONFIG } from '../config/api';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_CONFIG.baseURL,
+  timeout: API_CONFIG.timeout,
   headers: {
     'Content-Type': 'application/json',
   },

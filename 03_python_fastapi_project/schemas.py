@@ -18,3 +18,16 @@ class ProductUpdate(BaseModel):
     price: float | None = None
     description: str | None = None
     stock: int | None = None
+
+class BasketItemDTO(BaseModel):
+    id: int
+    product_id: int
+    quantity: int
+    product: ProductDTO
+
+class BasketItemCreate(BaseModel):
+    product_id: int
+    quantity: int = 1
+
+class BasketItemUpdate(BaseModel):
+    quantity: int

@@ -8,9 +8,10 @@ interface ProductListProps {
   onEdit: (product: Product) => void;
   onDelete: (id: number) => void;
   onView?: (product: Product) => void;
+  onAddToBasket: (productId: number) => void;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, isLoading, onEdit, onDelete, onView }) => {
+const ProductList: React.FC<ProductListProps> = ({ products, isLoading, onEdit, onDelete, onView, onAddToBasket }) => {
   if (isLoading) {
     return (
       <div className="loading">
@@ -39,6 +40,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, isLoading, onEdit, 
             onEdit={() => onEdit(product)}
             onDelete={() => onDelete(product.id)}
             onView={onView ? () => onView(product) : undefined}
+            onAddToBasket={() => onAddToBasket(product.id)}
           />
         ))}
       </div>

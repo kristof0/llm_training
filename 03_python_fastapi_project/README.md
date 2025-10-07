@@ -32,6 +32,10 @@ uv sync
 ```bash
 uv run uvicorn main:app --reload
 ```
+or
+```bash
+python -m uvicorn main:app --reload
+```
 
 ### Production Mode
 
@@ -41,14 +45,32 @@ uv run uvicorn main:app --host 0.0.0.0 --port 8000
 
 The application will be available at `http://localhost:8000`
 
+## Seed Sample Data
+
+To populate the database with sample products for development:
+
+```bash
+python seed_data.py
+```
+
+This will add 10 sample products including laptops, accessories, and peripherals.
+
 ## API Endpoints
 
+### Products
 - `GET /` - Welcome message
-- `POST /products/` - Create a new user
-- `GET /products/` - Get all users
-- `GET /products/<id>` - Get product
+- `POST /products/` - Create a new product
+- `GET /products/` - Get all products
+- `GET /products/<id>` - Get product by ID
 - `PUT /products/<id>` - Update product
 - `DELETE /products/<id>` - Delete product
+
+### Basket
+- `GET /basket/` - Get all items in the basket
+- `POST /basket/` - Add product to basket
+- `PUT /basket/<item_id>` - Update basket item quantity
+- `DELETE /basket/<item_id>` - Remove item from basket
+- `DELETE /basket/` - Clear entire basket
 
 
 ## Example Usage

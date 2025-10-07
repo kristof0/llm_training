@@ -1,70 +1,135 @@
-# Getting Started with Create React App
+# Online Market - React Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React-based frontend application for an online market with shopping cart functionality.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- Product browsing with search functionality
+- Product CRUD operations (Create, Read, Update, Delete)
+- Shopping cart/basket with:
+  - Add products to basket
+  - Adjust product quantities
+  - Remove items from basket
+  - Clear entire basket
+  - View total price
+  - Foldable basket widget in bottom-left corner
+- Responsive design for mobile and desktop
+- Integration with FastAPI backend
 
-### `npm start`
+## Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- React 18
+- TypeScript
+- Axios for API calls
+- Create React App
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Prerequisites
 
-### `npm test`
+- Node.js and npm installed
+- Backend API running on `http://localhost:8000` (see `03_python_fastapi_project`)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Installation
 
-### `npm run build`
+Install dependencies:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+npm install
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Running the Application
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Development Mode
 
-### `npm run eject`
+```bash
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The application will be available at `http://localhost:3000`
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The page will reload when you make changes. You may also see any lint errors in the console.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Production Build
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+npm run build
+```
+
+Builds the app for production to the `build` folder. It correctly bundles React in production mode and optimizes the build for the best performance.
+
+### Run Tests
+
+```bash
+npm test
+```
+
+Launches the test runner in the interactive watch mode.
+
+## Application Structure
+
+```
+src/
+├── components/         # React components
+│   ├── Basket.tsx     # Shopping basket widget (foldable)
+│   ├── ProductCard.tsx    # Individual product display
+│   ├── ProductList.tsx    # Product grid/list view
+│   ├── ProductForm.tsx    # Create/Edit product form
+│   ├── ProductDetails.tsx # Product detail modal
+│   └── DeleteProductDialog.tsx
+├── services/          # API service layer
+│   ├── productService.ts  # Product API calls
+│   └── basketService.ts   # Basket API calls
+├── types/             # TypeScript type definitions
+│   ├── Product.ts
+│   └── Basket.ts
+├── App.tsx           # Main application component
+├── App.css           # Global styles
+└── index.tsx         # Application entry point
+```
+
+## Key Features
+
+### Shopping Basket
+- **Foldable Widget**: Click the basket header to expand/collapse
+- **Bottom-Left Position**: Fixed position basket that stays visible while scrolling
+- **Quantity Controls**: Increase/decrease product quantities
+- **Stock Validation**: Prevents adding more items than available stock
+- **Total Calculation**: Real-time total price calculation
+
+### Product Management
+- **Search**: Filter products by name or description
+- **Add Product**: Create new products with name, price, description, and stock
+- **Edit Product**: Update existing product details
+- **Delete Product**: Remove products with confirmation dialog
+- **View Details**: See full product information in a modal
+
+## API Integration
+
+The frontend connects to the FastAPI backend at `http://localhost:8000` with the following endpoints:
+
+### Products
+- `GET /products/` - Fetch all products
+- `GET /products/{id}` - Fetch single product
+- `POST /products/` - Create new product
+- `PUT /products/{id}` - Update product
+- `DELETE /products/{id}` - Delete product
+
+### Basket
+- `GET /basket/` - Fetch basket items
+- `POST /basket/` - Add item to basket
+- `PUT /basket/{item_id}` - Update basket item quantity
+- `DELETE /basket/{item_id}` - Remove basket item
+- `DELETE /basket/` - Clear entire basket
+
+## Styling
+
+The application uses custom CSS with:
+- Clean, modern design
+- Responsive grid layout
+- Smooth transitions and hover effects
+- Fixed-position foldable basket widget
+- Mobile-friendly responsive breakpoints
 
 ## Learn More
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started)
+- [React documentation](https://reactjs.org/)

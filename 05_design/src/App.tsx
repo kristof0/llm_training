@@ -3,13 +3,18 @@ import './App.css';
 import ProductList from './components/ProductList';
 import ProductForm from './components/ProductForm';
 import ProductDetails from './components/ProductDetails';
+import Basket from './components/Basket';
 import { Product, ProductFormData } from './types/Product';
+import { BasketItem } from './types/Basket';
 import { productService } from './services/productService';
+import { basketService } from './services/basketService';
 
 function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [basketItems, setBasketItems] = useState<BasketItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isBasketLoading, setIsBasketLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -18,6 +23,7 @@ function App() {
 
   useEffect(() => {
     loadProducts();
+    loadBasket();
   }, []);
 
   useEffect(() => {
@@ -39,6 +45,19 @@ function App() {
       console.error('Error loading products:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadBasket = async () => {
+    try {
+      setIsBasketLoading(true);
+      const basket = await basketService.getBasket();
+      setBasketItems(basket);
+    } catch (err) {
+      console.error('Error loading basket:', err);
+      // Don't show error for basket loading failure - it's not critical
+    } finally {
+      setIsBasketLoading(false);
     }
   };
 
@@ -95,6 +114,46 @@ function App() {
     setViewingProduct(null);
   };
 
+  const handleAddToBasket = async (productId: number) => {
+    try {
+      await basketService.addToBasket({ product_id: productId, quantity: 1 });
+      await loadBasket(); // Refresh basket
+    } catch (err) {
+      setError('Failed to add item to basket');
+      console.error('Error adding to basket:', err);
+    }
+  };
+
+  const handleUpdateBasketQuantity = async (itemId: number, quantity: number) => {
+    try {
+      await basketService.updateBasketItem(itemId, { quantity });
+      await loadBasket(); // Refresh basket
+    } catch (err) {
+      setError('Failed to update basket item');
+      console.error('Error updating basket item:', err);
+    }
+  };
+
+  const handleRemoveFromBasket = async (itemId: number) => {
+    try {
+      await basketService.removeFromBasket(itemId);
+      await loadBasket(); // Refresh basket
+    } catch (err) {
+      setError('Failed to remove item from basket');
+      console.error('Error removing from basket:', err);
+    }
+  };
+
+  const handleClearBasket = async () => {
+    try {
+      await basketService.clearBasket();
+      await loadBasket(); // Refresh basket
+    } catch (err) {
+      setError('Failed to clear basket');
+      console.error('Error clearing basket:', err);
+    }
+  };
+
   return (
     <div className="App">
       <div className="container">
@@ -143,6 +202,15 @@ function App() {
           onEdit={handleEditProduct}
           onDelete={handleDeleteProduct}
           onView={handleViewProduct}
+          onAddToBasket={handleAddToBasket}
+        />
+
+        <Basket
+          basketItems={basketItems}
+          isLoading={isBasketLoading}
+          onUpdateQuantity={handleUpdateBasketQuantity}
+          onRemoveItem={handleRemoveFromBasket}
+          onClearBasket={handleClearBasket}
         />
 
         {viewingProduct && (
